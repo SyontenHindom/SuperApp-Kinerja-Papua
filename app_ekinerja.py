@@ -91,7 +91,7 @@ DAFTAR_PEMDA = [
 # 3. SIDEBAR 
 # ==========================================
 with st.sidebar:
-    st.image("[https://upload.wikimedia.org/wikipedia/commons/e/e5/Logo_BKN_Baru.png](https://upload.wikimedia.org/wikipedia/commons/e/e5/Logo_BKN_Baru.png)", width=120)
+    st.image("https://upload.wikimedia.org/wikipedia/commons/e/e5/Logo_BKN_Baru.png", width=120)
     st.divider()
     st.header("⚙️ Akses Engine Super AI")
     api_key = st.text_input("API Key (Gemini Pro):", type="password")
