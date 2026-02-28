@@ -3,43 +3,53 @@ import google.generativeai as genai
 import PyPDF2
 import pandas as pd
 import json
-import re
 
 # ==========================================
-# 1. KONFIGURASI SISTEM & TEMA PROFESIONAL PAPUA
+# 1. KONFIGURASI SISTEM & TEMA ANTI-CRASH
 # ==========================================
-st.set_page_config(page_title="SuperApp E-Kinerja Papua", page_icon="🎯", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="AI Merit System Papua", page_icon="🎯", layout="wide", initial_sidebar_state="expanded")
 
+# CSS Super Bersih (Hanya menargetkan container utama, tidak merusak layout Streamlit)
 st.markdown("""
     <style>
+    /* Latar Belakang Pemandangan */
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1570527418731-893da047e1d5?q=80&w=2000&auto=format&fit=crop"); 
         background-size: cover; background-attachment: fixed; background-position: center;
     }
-    .st-emotion-cache-1104q0b, .st-emotion-cache-1wmy9hl, div[data-testid="stVerticalBlock"] > div {
-        background: rgba(255, 255, 255, 0.96) !important;
-        backdrop-filter: blur(12px);
-        border-radius: 12px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    
+    /* Membungkus seluruh area tengah dengan SATU efek kaca agar tidak bertumpuk */
+    .block-container {
+        background: rgba(255, 255, 255, 0.95) !important;
+        padding: 3rem !important;
+        border-radius: 15px;
+        margin-top: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
+
+    /* Warna Teks yang Pasti Terbaca (Anti Dark-Mode Clash) */
+    h1, h2, h3, h4, h5, p, span, label, div {
+        color: #1E293B !important; 
+    }
+
     .papua-header {
-        background: linear-gradient(135deg, rgba(21, 128, 61, 0.98) 0%, rgba(194, 65, 12, 0.98) 50%, rgba(202, 138, 4, 0.98) 100%);
-        padding: 25px 30px; border-radius: 12px; color: white;
+        background: linear-gradient(135deg, rgba(21, 128, 61, 1) 0%, rgba(194, 65, 12, 1) 50%, rgba(202, 138, 4, 1) 100%);
+        padding: 25px 30px; border-radius: 12px; color: white !important;
         box-shadow: 0 10px 20px rgba(0,0,0,0.2); margin-bottom: 25px;
         display: flex; align-items: center; gap: 25px;
     }
-    .papua-title {font-size: 34px !important; font-weight: 900; margin-bottom: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);}
+    .papua-header p { color: white !important; }
+    .papua-title {font-size: 36px !important; font-weight: 900; margin-bottom: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);}
     .papua-subtitle {font-size: 16px !important; font-weight: 400; margin: 0; opacity: 0.9;}
-    .step-title {font-size: 22px !important; font-weight: 800; color: #1E3A8A; border-bottom: 3px solid #F59E0B; padding-bottom: 8px; margin-bottom: 15px;}
-    .jabatan-title {font-size: 18px !important; font-weight: 700; color: #0F172A; background: linear-gradient(90deg, #E0F2FE 0%, #FFFFFF 100%); padding: 10px 15px; border-radius: 6px; margin-top: 20px; border-left: 5px solid #0284C7;}
+    .step-title {font-size: 22px !important; font-weight: 800; color: #1E3A8A !important; border-bottom: 3px solid #F59E0B; padding-bottom: 8px; margin-bottom: 15px;}
+    .jabatan-title {font-size: 18px !important; font-weight: 700; color: #0F172A !important; background: linear-gradient(90deg, #E0F2FE 0%, #F8FAFC 100%); padding: 10px 15px; border-radius: 6px; margin-top: 20px; border-left: 5px solid #0284C7;}
     .diagnostic-box {background: #F8FAFC; border: 1px solid #CBD5E1; border-left: 6px solid #3B82F6; padding: 20px; border-radius: 8px; margin-top: 20px;}
-    .info-box-green {background: #ECFDF5; border-left: 5px solid #10B981; padding: 12px; font-size: 14px; border-radius: 6px; margin-bottom: 12px;}
-    .info-box-yellow {background: #FFFBEB; border-left: 5px solid #F59E0B; padding: 12px; font-size: 14px; border-radius: 6px; margin-bottom: 12px;}
-    .info-box-red {background: #FEF2F2; border-left: 5px solid #EF4444; padding: 12px; font-size: 14px; border-radius: 6px; margin-bottom: 12px;}
     </style>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. FUNGSI INTI & ANTI-CRASH JSON PARSER
+# 2. FUNGSI INTI
 # ==========================================
 for key in ['target_jpt', 'struktur_sotk', 'parsed_data', 'dokumen_terbaca']:
     if key not in st.session_state: st.session_state[key] = None if key == 'parsed_data' else ""
@@ -67,7 +77,6 @@ def generate_html_print(df, nama_jabatan, instansi, skpd, tahun):
         table {{ border-collapse: collapse; width: 100%; margin-top: 20px; }}
         th, td {{ border: 1px solid #000; padding: 6px; text-align: left; vertical-align: top; }}
         th {{ background-color: #e2e8f0; text-align: center; font-weight: bold; }}
-        /* Membuat baris yang RHK-nya kosong (Kualitas/Waktu) terlihat seperti di-merge */
         td:empty {{ border-top: none; border-bottom: none; }} 
         @media print {{ @page {{ size: landscape; margin: 12mm; }} }}
     </style></head><body>
@@ -91,7 +100,7 @@ DAFTAR_PEMDA = [
 # 3. SIDEBAR 
 # ==========================================
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/e/e5/Logo_BKN_Baru.png", width=120)
+    st.image("[https://upload.wikimedia.org/wikipedia/commons/e/e5/Logo_BKN_Baru.png](https://upload.wikimedia.org/wikipedia/commons/e/e5/Logo_BKN_Baru.png)", width=120)
     st.divider()
     st.header("⚙️ Akses Engine Super AI")
     api_key = st.text_input("API Key (Gemini Pro):", type="password")
@@ -104,17 +113,17 @@ with st.sidebar:
     
     st.divider()
     st.header("📂 Mode Analisis AI")
-    mode_pemrosesan = st.radio("Pilih Basis Pengetahuan:", ["1. Upload Renstra/PK", "2. Upload SOTK/Tupoksi", "3. Auto-Indexing (Web Nasional)"], label_visibility="collapsed")
+    mode_pemrosesan = st.radio("Pilih Basis Pengetahuan:", ["1. Upload Renstra/PK", "2. Upload SOTK/Tupoksi", "3. Mode Auto-Indexing"], label_visibility="collapsed")
 
     uploaded_file = None
     if "1. Upload Renstra" in mode_pemrosesan:
-        st.markdown('<div class="info-box-green">✅ <b>Sangat Disarankan.</b> Analisis berdasarkan dokumen asli Renstra/PK.</div>', unsafe_allow_html=True)
+        st.success("✅ Sangat Disarankan. Analisis berdasarkan dokumen asli.")
         uploaded_file = st.file_uploader("Upload Dokumen Perencanaan (PDF)", type="pdf")
     elif "2. Upload Tupoksi" in mode_pemrosesan:
-        st.markdown('<div class="info-box-yellow">⚠️ <b>Cukup Baik.</b> SOTK presisi, namun target/angka disimulasikan oleh AI.</div>', unsafe_allow_html=True)
-        uploaded_file = st.file_uploader("Upload Perbup/Pergub SOTK (PDF)", type="pdf")
+        st.warning("⚠️ Cukup Baik. SOTK presisi, target angka disimulasikan.")
+        uploaded_file = st.file_uploader("Upload Perda SOTK (PDF)", type="pdf")
     else:
-        st.markdown('<div class="info-box-red">🔥 <b>Autonomous Mode.</b> AI menggunakan referensi JDIH, badanpengarahpapua.go.id untuk mengarang struktur & tupoksi.</div>', unsafe_allow_html=True)
+        st.error("🔥 Autonomous Mode. AI akan menyusun otomatis dari referensi web.")
 
 # ==========================================
 # 4. HEADER 
@@ -153,25 +162,18 @@ if api_key and nama_skpd:
     dokumen_teks = st.session_state.dokumen_terbaca
     status_mode = mode_pemrosesan.split(" (")[0]
 
-    # ------------------------------------------
-    # TAHAP 1: RHK JPT
-    # ------------------------------------------
     st.markdown('<p class="step-title">🎯 TAHAP 1: Konstruksi Strategi Pimpinan (JPT)</p>', unsafe_allow_html=True)
     if st.button("🔍 1. Rumuskan Target Kepala SKPD", type="primary", use_container_width=True):
         with st.spinner("Membaca UU 2/2021, RAPPP, dan Regulasi BKN..."):
             prompt_jpt = f"""
             Lokus: {lokus_pemda}. Unit Kerja: {nama_skpd}. Tahun: {tahun_skp}. MODE: {status_mode}.
-            
             Gunakan UU Nomor 2 Tahun 2021 tentang Otsus Papua, Rencana Aksi Percepatan Pembangunan Papua (RAPPP) 2025-2029 (seperti peningkatan SDM OAP, ekonomi, infrastruktur), dan PermenPANRB 6/2022.
-            
             Tugas: Rumuskan TEPAT 4 Rencana Hasil Kerja (RHK) Utama Kepala {nama_skpd} yang mendukung roh Otsus Papua.
-            
             ATURAN MUTLAK 4 PERSPEKTIF BSC:
             1. [Penerima Layanan] - Outcome Pelayanan Teknis untuk Masyarakat/OAP.
             2. [Proses Bisnis Internal] - Outcome Kualitas Tata Kelola/Inovasi.
             3. [Penguatan Internal] - Outcome Peningkatan SDM & Integritas.
             4. [Anggaran] - Outcome Realisasi APBD & SAKIP (PermenPANRB 22/2024).
-            
             Dokumen User: {dokumen_teks[:25000]}
             """
             st.session_state.target_jpt = model.generate_content(prompt_jpt).text
@@ -179,64 +181,50 @@ if api_key and nama_skpd:
     if st.session_state.target_jpt:
         st.session_state.target_jpt = st.text_area("Validasi Kinerja JPT (Edit jika diperlukan):", st.session_state.target_jpt, height=200)
 
-    # ------------------------------------------
-    # TAHAP 2: SOTK
-    # ------------------------------------------
     st.write("")
-    st.markdown('<p class="step-title">🏢 TAHAP 2: Arsitektur Organisasi</p>', unsafe_allow_html=True)
+    st.markdown('<p class="step-title">🏢 TAHAP 2: Arsitektur Organisasi & Garis Komando</p>', unsafe_allow_html=True)
     if st.button("🏛️ 2. Bangun Struktur Organisasi (SOTK)", type="secondary", use_container_width=True):
         with st.spinner(f"Membangun struktur SOTK via {status_mode}..."):
-            prompt_sotk = f"Susun SOTK logis untuk {nama_skpd} di lingkungan {lokus_pemda}. Format: 1. Kepala -> 1.1 Sekretaris/Kabid -> JF/Pelaksana. Dokumen: {dokumen_teks[:15000]}"
+            prompt_sotk = f"Susun SOTK logis untuk {nama_skpd} di lingkungan {lokus_pemda} berdasarkan referensi Permendagri/JDIH. Format: 1. Kepala -> 1.1 Sekretaris/Kabid -> JF/Pelaksana. Dokumen User: {dokumen_teks[:15000]}"
             st.session_state.struktur_sotk = model.generate_content(prompt_sotk).text
             
     if st.session_state.struktur_sotk:
         st.session_state.struktur_sotk = st.text_area("Cek & Lengkapi Jabatan (Ketik manual jika ada jabatan kurang):", st.session_state.struktur_sotk, height=220)
 
-    # ------------------------------------------
-    # TAHAP 3: CASCADING EKSPANSIF & VISUAL GROUPING
-    # ------------------------------------------
     st.write("")
     if st.session_state.struktur_sotk and st.session_state.target_jpt:
-        st.markdown('<p class="step-title">⚙️ TAHAP 3: Cascading Ekstensif (Anti-Repetisi)</p>', unsafe_allow_html=True)
+        st.markdown('<p class="step-title">⚙️ TAHAP 3: Eksekusi Cascading (Multi-RHK per Pegawai)</p>', unsafe_allow_html=True)
         
         if st.button("🚀 3. Proses Engine e-Kinerja BKN (Final)", type="primary", use_container_width=True):
-            with st.spinner("Menyusun MULTI-RHK per pegawai dan membersihkan duplikasi teks (Visual Grouping)..."):
+            with st.spinner("AI Sedang Menjahit Cascading Langsung & Tidak Langsung..."):
                 prompt_json = f"""
                 Lokus: {lokus_pemda}. SKPD: {nama_skpd}. 
                 TARGET JPT: "{st.session_state.target_jpt}". 
                 SOTK: "{st.session_state.struktur_sotk}"
                 
+                Anda adalah AI e-Kinerja BKN. Pedomani UU Otsus Papua dan RAPPP 2025-2029 dalam menyusun indikator.
+                
                 🔥 MULTI-RHK PER PEGAWAI:
-                Untuk SETIAP Jabatan bawahan, ciptakan MINIMAL 3 hingga 4 RHK BERBEDA (Campuran Cascading Langsung & Tidak Langsung). Pedomani RAPPP Papua.
+                Untuk SETIAP Jabatan bawahan, ciptakan MINIMAL 3 hingga 4 RHK BERBEDA (Campuran Cascading Langsung & Tidak Langsung).
                 
                 🔥 THE RULE OF THREE & ANTI-REPETISI (SANGAT MUTLAK): 🔥
                 Setiap 1 RHK wajib dipecah menjadi 3 baris (Kuantitas, Kualitas, Waktu). 
                 NAMUN, untuk baris "Kualitas" dan "Waktu", Anda WAJIB MENGOSONGKAN string pada kolom "Jenis Cascading", "RHK Atasan Yang Diintervensi", dan "Rencana Hasil Kerja" menjadi string kosong (""). Ini agar teks tidak berulang-ulang di tabel aplikasi!
                 
-                CONTOH FORMAT ARRAY BAWAHAN YANG BENAR (1 RHK = 3 Baris Visual Grouping):
-                [
-                  {{"Jenis Cascading": "Langsung", "RHK Atasan Yang Diintervensi": "Meningkatnya Pendidikan OAP", "Rencana Hasil Kerja": "Terkendalinya kurikulum lokal", "Aspek": "Kuantitas", "Indikator Kinerja Individu": "Jumlah kurikulum...", "Target Tahunan": "2 Kurikulum"}},
-                  {{"Jenis Cascading": "", "RHK Atasan Yang Diintervensi": "", "Rencana Hasil Kerja": "", "Aspek": "Kualitas", "Indikator Kinerja Individu": "Persentase kesesuaian...", "Target Tahunan": "100%"}},
-                  {{"Jenis Cascading": "", "RHK Atasan Yang Diintervensi": "", "Rencana Hasil Kerja": "", "Aspek": "Waktu", "Indikator Kinerja Individu": "Waktu penyelesaian...", "Target Tahunan": "12 Bulan"}}
-                ]
-                
                 FORMAT JSON MURNI WAJIB:
                 {{
                     "Kesimpulan_dan_Rekomendasi": {{"Aturan_Dasar_Digunakan": [], "Evaluasi_Kekurangan_Data": [], "Saran_Tindak_Lanjut": []}},
                     "SKP_JPT": [ {{"Perspektif": "...", "Rencana Hasil Kerja": "...", "Indikator Kinerja Utama": "...", "Target Tahunan": "..."}} ],
-                    "SKP_JA": {{ "Nama Jabatan A": [ ...Terapkan contoh anti-repetisi di atas... ] }},
-                    "SKP_JF": {{ "Nama Jabatan JF": [ ...Terapkan contoh anti-repetisi di atas... ] }},
-                    "SKP_Pelaksana": {{ "Nama Pelaksana": [ ...Terapkan contoh anti-repetisi di atas... ] }}
+                    "SKP_JA": {{ "Nama Jabatan A": [ {{"Jenis Cascading": "Langsung", "RHK Atasan Yang Diintervensi": "...", "Rencana Hasil Kerja": "...", "Aspek": "Kuantitas", "Indikator Kinerja Individu": "...", "Target Tahunan": "...", "Bukti Dukung": "..."}}, {{"Jenis Cascading": "", "RHK Atasan Yang Diintervensi": "", "Rencana Hasil Kerja": "", "Aspek": "Kualitas", "Indikator Kinerja Individu": "...", "Target Tahunan": "...", "Bukti Dukung": "..."}}, {{"Jenis Cascading": "", "RHK Atasan Yang Diintervensi": "", "Rencana Hasil Kerja": "", "Aspek": "Waktu", "Indikator Kinerja Individu": "...", "Target Tahunan": "...", "Bukti Dukung": "..."}} ] }},
+                    "SKP_JF": {{ "Nama Jabatan JF": [ ...Pola Sama... ] }},
+                    "SKP_Pelaksana": {{ "Nama Pelaksana": [ ...Pola Sama... ] }}
                 }}
                 """
                 raw_response = model.generate_content(prompt_json, generation_config=genai.types.GenerationConfig(temperature=0.1)).text
                 st.session_state.parsed_data = json.loads(clean_json_response(raw_response))
 
-        # ------------------------------------------
-        # TAHAP 4: RENDER UI
-        # ------------------------------------------
         if st.session_state.parsed_data:
-            st.success("✅ Matriks Kinerja Sempurna! (Satu RHK tidak lagi diulang-ulang. Kolom RHK menjadi bersih seperti di-Merge!).")
+            st.success("✅ Matriks Kinerja Sempurna! Tabel tersusun bersih tanpa pengulangan kata.")
             data_skp = st.session_state.parsed_data
             
             diag = data_skp.get("Kesimpulan_dan_Rekomendasi", {})
@@ -259,49 +247,43 @@ if api_key and nama_skpd:
                         edited_jpt = st.data_editor(df_jpt, column_config=col_jpt, num_rows="dynamic", use_container_width=True)
                         
                         c1, c2, c3 = st.columns([1,1,2])
-                        with c1: st.download_button("📥 Excel", data=edited_jpt.to_csv(index=False).encode('utf-8'), file_name="SKP_JPT.csv", mime="text/csv")
-                        with c2: st.download_button("🖨️ Cetak PDF", data=generate_html_print(edited_jpt, "Kepala SKPD", lokus_pemda, nama_skpd, tahun_skp), file_name="SKP_JPT.html", mime="text/html")
+                        with c1: st.download_button("📥 Excel", data=edited_jpt.to_csv(index=False).encode('utf-8'), file_name="SKP_JPT.csv", mime="text/csv", use_container_width=True)
+                        with c2: st.download_button("🖨️ Cetak PDF", data=generate_html_print(edited_jpt, "Kepala SKPD", lokus_pemda, nama_skpd, tahun_skp), file_name="SKP_JPT.html", mime="text/html", use_container_width=True)
                     else:
                         if not data_kategori: return
                         for nama_jabatan, list_rhk in data_kategori.items():
-                            st.markdown(f'<p class="jabatan-title">👤 {nama_jabatan}</p>', unsafe_allow_html=True)
-                            
-                            col_cfg = {
-                                "Jenis Cascading": st.column_config.SelectboxColumn("Cascading", options=["Langsung", "Tidak Langsung", ""]),
-                                "Aspek": st.column_config.SelectboxColumn("Aspek", options=["Kuantitas", "Kualitas", "Waktu"])
-                            }
-                            edited_df = st.data_editor(pd.DataFrame(list_rhk), column_config=col_cfg, num_rows="dynamic", use_container_width=True, key=f"edit_{nama_jabatan}")
-                            
-                            c1, c2, c3 = st.columns([1,1,2])
-                            with c1: st.download_button(f"📥 Excel", data=edited_df.to_csv(index=False).encode('utf-8'), file_name=f"SKP_{nama_jabatan.replace(' ','_')}.csv", mime="text/csv", key=f"csv_{nama_jabatan}")
-                            with c2: st.download_button(f"🖨️ Cetak PDF", data=generate_html_print(edited_df, nama_jabatan, lokus_pemda, nama_skpd, tahun_skp), file_name=f"SKP_{nama_jabatan.replace(' ','_')}.html", mime="text/html", key=f"pdf_{nama_jabatan}")
+                            with st.container(border=True):
+                                st.markdown(f'<p class="jabatan-title">👤 {nama_jabatan}</p>', unsafe_allow_html=True)
+                                
+                                col_cfg = {
+                                    "Jenis Cascading": st.column_config.SelectboxColumn("Cascading", options=["Langsung", "Tidak Langsung", ""]),
+                                    "Aspek": st.column_config.SelectboxColumn("Aspek", options=["Kuantitas", "Kualitas", "Waktu"])
+                                }
+                                edited_df = st.data_editor(pd.DataFrame(list_rhk), column_config=col_cfg, num_rows="dynamic", use_container_width=True, key=f"edit_{nama_jabatan}")
+                                
+                                c1, c2, c3 = st.columns([1,1,2])
+                                with c1: st.download_button(f"📥 Excel", data=edited_df.to_csv(index=False).encode('utf-8'), file_name=f"SKP_{nama_jabatan.replace(' ','_')}.csv", mime="text/csv", use_container_width=True, key=f"csv_{nama_jabatan}")
+                                with c2: st.download_button(f"🖨️ Cetak PDF", data=generate_html_print(edited_df, nama_jabatan, lokus_pemda, nama_skpd, tahun_skp), file_name=f"SKP_{nama_jabatan.replace(' ','_')}.html", mime="text/html", use_container_width=True, key=f"pdf_{nama_jabatan}")
 
             render_tabel(data_skp.get("SKP_JPT", []), tab1, is_jpt=True)
             render_tabel(data_skp.get("SKP_JA", {}), tab2, is_jpt=False)
             render_tabel(data_skp.get("SKP_JF", {}), tab3, is_jpt=False)
             render_tabel(data_skp.get("SKP_Pelaksana", {}), tab4, is_jpt=False)
 
-            # ------------------------------------------
-            # TAHAP 5: FITUR TAMBAH JABATAN DYNAMIC AI
-            # ------------------------------------------
             st.divider()
             st.markdown('<p class="step-title">➕ Tambah Jabatan Baru ke Matriks (AI Auto-Tasking)</p>', unsafe_allow_html=True)
-            
             col_t1, col_t2, col_t3 = st.columns([2, 1, 1])
-            with col_t1: new_jabatan = st.text_input("Nama Jabatan Baru:", placeholder="Cth: Penelaah Teknis / Honorer", label_visibility="collapsed")
+            with col_t1: new_jabatan = st.text_input("Nama Jabatan Baru:", placeholder="Cth: Tenaga Honorer Satpam", label_visibility="collapsed")
             with col_t2: new_kategori = st.selectbox("Kategori e-Kinerja:", ["SKP_Pelaksana", "SKP_JF", "SKP_JA"], label_visibility="collapsed")
             with col_t3: btn_tambah = st.button("➕ Generate RHK Jabatan", type="primary", use_container_width=True)
 
             if btn_tambah and new_jabatan:
-                with st.spinner(f"AI sedang memikirkan Tupoksi & Visual Grouping 3 Aspek untuk {new_jabatan}..."):
+                with st.spinner(f"AI sedang memikirkan Tupoksi & 3 Aspek Indikator untuk {new_jabatan}..."):
                     prompt_new = f"""
                     TARGET JPT: {st.session_state.target_jpt}
-                    Buatkan MINIMAL 3 RHK berbeda (Campuran Cascading: Langsung & Tidak Langsung) untuk Jabatan "{new_jabatan}" di {nama_skpd}.
-                    Wajib gunakan Rule of 3. KOSONGKAN teks RHK pada baris Kualitas dan Waktu agar tidak berulang (Visual Grouping).
-                    Format JSON Murni:
-                    [ {{"Jenis Cascading": "Langsung", "RHK Atasan Yang Diintervensi": "...", "Rencana Hasil Kerja": "...", "Aspek": "Kuantitas", "Indikator": "...", "Target": "..."}},
-                      {{"Jenis Cascading": "", "RHK Atasan Yang Diintervensi": "", "Rencana Hasil Kerja": "", "Aspek": "Kualitas", "Indikator": "...", "Target": "..."}},
-                      {{"Jenis Cascading": "", "RHK Atasan Yang Diintervensi": "", "Rencana Hasil Kerja": "", "Aspek": "Waktu", "Indikator": "...", "Target": "..."}} ]
+                    Buatkan MINIMAL 3 RHK berbeda (Campuran Jenis Cascading: Langsung & Tidak Langsung) untuk Jabatan: "{new_jabatan}" di {nama_skpd} {lokus_pemda}. Pedomani Otsus Papua.
+                    Wajib gunakan Rule of 3 (Kuantitas, Kualitas, Waktu) untuk setiap RHK, dan kosongkan teks pada baris kualitas/waktu agar rapi.
+                    Format JSON Murni.
                     """
                     new_json_str = clean_json_response(model.generate_content(prompt_new).text)
                     try:
